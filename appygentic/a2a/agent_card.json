@@ -1,0 +1,99 @@
+{
+  "name": "Appygentic PM Agent",
+  "description": "Project Manager agent that orchestrates teams of specialist AI agents to deliver API proxy implementations on GCP Apigee X or Azure APIM. Submit requirements in natural language or structured format — the agent team handles design, implementation, testing, and delivery.",
+  "version": "2.0.0",
+  "iconUrl": "https://appygentic.io/assets/pm-agent-icon.png",
+  "supportedInterfaces": [
+    {
+      "url": "https://api.appygentic.io/a2a",
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0"
+    },
+    {
+      "url": "https://api.appygentic.io/a2a/rest",
+      "protocolBinding": "HTTP_JSON",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": true,
+    "stateTransitionHistory": true,
+    "extendedAgentCard": true,
+    "extensions": [
+      {
+        "uri": "https://appygentic.io/extensions/billing/v1",
+        "description": "Usage-based billing metadata on task completion",
+        "required": false,
+        "params": { "billing_provider": "stripe" }
+      },
+      {
+        "uri": "https://appygentic.io/extensions/bpmn-tracking/v1",
+        "description": "BPMN process instance tracking for workflow transparency",
+        "required": false
+      }
+    ]
+  },
+  "defaultInputModes": ["text/plain", "application/json", "application/yaml"],
+  "defaultOutputModes": ["text/plain", "application/json", "application/zip"],
+  "skills": [
+    {
+      "id": "apigee-x-proxy-implementation",
+      "name": "Apigee X API Proxy Implementation",
+      "description": "Full API proxy implementation on GCP Apigee X including proxy bundle, Cloud Functions, and Apigee policies. Delivers a deployable proxy bundle with tests.",
+      "tags": ["gcp", "apigee", "api-proxy", "implementation"],
+      "outputModes": ["application/zip", "application/json"]
+    },
+    {
+      "id": "azure-apim-implementation",
+      "name": "Azure APIM API Implementation",
+      "description": "Full API implementation on Azure APIM including Logic Apps, Function Apps, and APIM policies. Delivers ARM templates and deployment artifacts.",
+      "tags": ["azure", "apim", "api-proxy", "implementation"],
+      "outputModes": ["application/zip", "application/json"]
+    },
+    {
+      "id": "api-design-review",
+      "name": "API Design Review",
+      "description": "Reviews API specifications against best practices for the target platform. Returns annotated spec with recommendations.",
+      "tags": ["review", "design", "api"],
+      "outputModes": ["application/json", "text/plain"]
+    },
+    {
+      "id": "requirement-intake",
+      "name": "Requirement Intake and DoR Validation",
+      "description": "Structured intake of API proxy requirements with Definition of Ready validation. Returns validated requirement set or requests additional information.",
+      "tags": ["intake", "requirements", "dor"]
+    }
+  ],
+  "authentication": [
+    {
+      "type": "OAuth2",
+      "flows": {
+        "authorizationCode": {
+          "authorizationUrl": "https://auth.appygentic.io/oauth/authorize",
+          "tokenUrl": "https://auth.appygentic.io/oauth/token",
+          "scopes": {
+            "agent:execute": "Execute agent tasks",
+            "agent:read": "Read task status and artifacts"
+          }
+        },
+        "clientCredentials": {
+          "tokenUrl": "https://auth.appygentic.io/oauth/token",
+          "scopes": {
+            "agent:execute": "Execute agent tasks"
+          }
+        }
+      }
+    },
+    {
+      "type": "ApiKey",
+      "in": "header",
+      "name": "X-API-Key"
+    }
+  ],
+  "provider": {
+    "organization": "Appygentic",
+    "url": "https://appygentic.io"
+  },
+  "documentationUrl": "https://docs.appygentic.io/a2a-integration"
+}

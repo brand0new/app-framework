@@ -1,0 +1,91 @@
+version: "3.9"
+
+services:
+  # ── A2A Gateway (ADK Python) ────────────────────────────────────────────────
+  a2a_gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION}
+      - PRIMARY_MODEL=${PRIMARY_MODEL:-gemini-2.5-flash}
+      - SPECIALIST_MODEL=${SPECIALIST_MODEL:-gemini-2.5-pro}
+      - BPMN_SERVICE_URL=http://bpmn_service:3001
+      - NEO4J_URI=${NEO4J_URI}
+      - NEO4J_USERNAME=${NEO4J_USERNAME}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - KAFKA_API_KEY=${KAFKA_API_KEY}
+      - KAFKA_API_SECRET=${KAFKA_API_SECRET}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - A2A_BASE_URL=${A2A_BASE_URL:-http://localhost:8080/a2a}
+      - OTEL_SERVICE_NAME=appygentic-a2a-gateway
+    env_file: .env
+    depends_on:
+      - bpmn_service
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── BPMN Microservice (Node.js) ─────────────────────────────────────────────
+  bpmn_service:
+    build:
+      context: ./bpmn_service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+    env_file:
+      - ./bpmn_service/.env.example
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── MCP Skill: Apigee ───────────────────────────────────────────────────────
+  mcp_apigee:
+    build:
+      context: ./skills/apigee
+      dockerfile: Dockerfile
+    ports:
+      - "3100:3100"
+    environment:
+      - PORT=3100
+    env_file: .env
+    restart: unless-stopped
+
+  # ── MCP Skill: APIM ─────────────────────────────────────────────────────────
+  mcp_apim:
+    build:
+      context: ./skills/apim
+      dockerfile: Dockerfile
+    ports:
+      - "3101:3101"
+    environment:
+      - PORT=3101
+    env_file: .env
+    restart: unless-stopped
+
+  # ── MCP Skill: Neo4j ────────────────────────────────────────────────────────
+  mcp_neo4j:
+    build:
+      context: ./skills/neo4j
+      dockerfile: Dockerfile
+    ports:
+      - "3102:3102"
+    environment:
+      - PORT=3102
+      - NEO4J_URI=${NEO4J_URI}
+      - NEO4J_USERNAME=${NEO4J_USERNAME}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+    restart: unless-stopped

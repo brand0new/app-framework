@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             targetNamespace="https://appygentic.io/bpmn"
+             id="api_proxy_workflow_definitions">
+
+  <process id="api_proxy_workflow" name="API Proxy Implementation Workflow" isExecutable="true">
+
+    <!-- ── Start ──────────────────────────────────────────────────────────── -->
+    <startEvent id="start" name="Requirements Received">
+      <outgoing>flow_start_to_ingestion</outgoing>
+    </startEvent>
+
+    <!-- ── Phase 1: Ingestion & DoR Validation ───────────────────────────── -->
+    <serviceTask id="ingestion_task" name="Ingestion &amp; DoR Validation">
+      <incoming>flow_start_to_ingestion</incoming>
+      <outgoing>flow_ingestion_to_dor_gateway</outgoing>
+    </serviceTask>
+
+    <exclusiveGateway id="dor_gateway" name="DoR Passed?">
+      <incoming>flow_ingestion_to_dor_gateway</incoming>
+      <outgoing>flow_dor_failed</outgoing>
+      <outgoing>flow_dor_passed</outgoing>
+    </exclusiveGateway>
+
+    <!-- DoR failed: request missing info from customer -->
+    <userTask id="request_info_task" name="Request Missing Information">
+      <incoming>flow_dor_failed</incoming>
+      <outgoing>flow_info_provided</outgoing>
+    </userTask>
+
+    <!-- ── Phase 2: Correlation ───────────────────────────────────────────── -->
+    <serviceTask id="correlation_task" name="Task Decomposition &amp; Team Routing">
+      <incoming>flow_dor_passed</incoming>
+      <incoming>flow_info_provided</incoming>
+      <outgoing>flow_correlation_to_platform_gateway</outgoing>
+    </serviceTask>
+
+    <exclusiveGateway id="platform_gateway" name="Target Platform?">
+      <incoming>flow_correlation_to_platform_gateway</incoming>
+      <outgoing>flow_to_gcp</outgoing>
+      <outgoing>flow_to_azure</outgoing>
+      <outgoing>flow_to_both</outgoing>
+    </exclusiveGateway>
+
+    <!-- ── Phase 3a: GCP Execution ───────────────────────────────────────── -->
+    <serviceTask id="gcp_execution_task" name="GCP Apigee X Implementation">
+      <incoming>flow_to_gcp</incoming>
+      <outgoing>flow_gcp_to_join</outgoing>
+    </serviceTask>
+
+    <!-- ── Phase 3b: Azure Execution ─────────────────────────────────────── -->
+    <serviceTask id="azure_execution_task" name="Azure APIM Implementation">
+      <incoming>flow_to_azure</incoming>
+      <outgoing>flow_azure_to_join</outgoing>
+    </serviceTask>
+
+    <!-- ── Phase 3c: Both Platforms (parallel) ───────────────────────────── -->
+    <parallelGateway id="both_split" name="Both Platforms Split">
+      <incoming>flow_to_both</incoming>
+      <outgoing>flow_both_gcp</outgoing>
+      <outgoing>flow_both_azure</outgoing>
+    </parallelGateway>
+
+    <serviceTask id="both_gcp_task" name="GCP Implementation (parallel)">
+      <incoming>flow_both_gcp</incoming>
+      <outgoing>flow_both_gcp_join</outgoing>
+    </serviceTask>
+
+    <serviceTask id="both_azure_task" name="Azure Implementation (parallel)">
+      <incoming>flow_both_azure</incoming>
+      <outgoing>flow_both_azure_join</outgoing>
+    </serviceTask>
+
+    <parallelGateway id="both_join" name="Both Platforms Join">
+      <incoming>flow_both_gcp_join</incoming>
+      <incoming>flow_both_azure_join</incoming>
+      <outgoing>flow_both_to_join</outgoing>
+    </parallelGateway>
+
+    <!-- ── Join Gateway ───────────────────────────────────────────────────── -->
+    <exclusiveGateway id="execution_join" name="Execution Complete">
+      <incoming>flow_gcp_to_join</incoming>
+      <incoming>flow_azure_to_join</incoming>
+      <incoming>flow_both_to_join</incoming>
+      <outgoing>flow_join_to_delivery</outgoing>
+    </exclusiveGateway>
+
+    <!-- ── Phase 4: Delivery ─────────────────────────────────────────────── -->
+    <serviceTask id="delivery_task" name="Artifact Assembly &amp; Billing">
+      <incoming>flow_join_to_delivery</incoming>
+      <outgoing>flow_delivery_to_end</outgoing>
+    </serviceTask>
+
+    <!-- ── End ───────────────────────────────────────────────────────────── -->
+    <endEvent id="end" name="Deliverable Handed Over">
+      <incoming>flow_delivery_to_end</incoming>
+    </endEvent>
+
+    <!-- ── Sequence Flows ─────────────────────────────────────────────────── -->
+    <sequenceFlow id="flow_start_to_ingestion" sourceRef="start" targetRef="ingestion_task"/>
+    <sequenceFlow id="flow_ingestion_to_dor_gateway" sourceRef="ingestion_task" targetRef="dor_gateway"/>
+    <sequenceFlow id="flow_dor_failed" name="DoR Failed" sourceRef="dor_gateway" targetRef="request_info_task">
+      <conditionExpression>${dorStatus == 'dor_failed'}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow_dor_passed" name="DoR Passed" sourceRef="dor_gateway" targetRef="correlation_task">
+      <conditionExpression>${dorStatus == 'dor_passed'}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow_info_provided" sourceRef="request_info_task" targetRef="correlation_task"/>
+    <sequenceFlow id="flow_correlation_to_platform_gateway" sourceRef="correlation_task" targetRef="platform_gateway"/>
+    <sequenceFlow id="flow_to_gcp" name="GCP Only" sourceRef="platform_gateway" targetRef="gcp_execution_task">
+      <conditionExpression>${teamAssignment == 'gcp'}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow_to_azure" name="Azure Only" sourceRef="platform_gateway" targetRef="azure_execution_task">
+      <conditionExpression>${teamAssignment == 'azure'}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow_to_both" name="Both Platforms" sourceRef="platform_gateway" targetRef="both_split">
+      <conditionExpression>${teamAssignment == 'both'}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow_gcp_to_join" sourceRef="gcp_execution_task" targetRef="execution_join"/>
+    <sequenceFlow id="flow_azure_to_join" sourceRef="azure_execution_task" targetRef="execution_join"/>
+    <sequenceFlow id="flow_both_gcp" sourceRef="both_split" targetRef="both_gcp_task"/>
+    <sequenceFlow id="flow_both_azure" sourceRef="both_split" targetRef="both_azure_task"/>
+    <sequenceFlow id="flow_both_gcp_join" sourceRef="both_gcp_task" targetRef="both_join"/>
+    <sequenceFlow id="flow_both_azure_join" sourceRef="both_azure_task" targetRef="both_join"/>
+    <sequenceFlow id="flow_both_to_join" sourceRef="both_join" targetRef="execution_join"/>
+    <sequenceFlow id="flow_join_to_delivery" sourceRef="execution_join" targetRef="delivery_task"/>
+    <sequenceFlow id="flow_delivery_to_end" sourceRef="delivery_task" targetRef="end"/>
+
+  </process>
+</definitions>

@@ -1,0 +1,18 @@
+{
+  "name": "neo4j-skill",
+  "version": "1.0.0",
+  "description": "MCP skill for Neo4j AuraDB knowledge graph queries and mutations",
+  "server": {
+    "transport": "http",
+    "url": "${MCP_NEO4J_URL}",
+    "healthPath": "/health"
+  },
+  "exposed_tools": [
+    "cypher_read",
+    "cypher_write",
+    "find_related_apis",
+    "find_org_patterns",
+    "store_implementation_record",
+    "get_technology_constraints"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "apigee-skill",
+  "version": "1.0.0",
+  "description": "MCP skill for GCP Apigee X proxy bundle operations",
+  "server": {
+    "transport": "http",
+    "url": "${MCP_APIGEE_URL}",
+    "healthPath": "/health"
+  },
+  "exposed_tools": [
+    "validate_proxy_xml",
+    "validate_policy_xml",
+    "lint_proxy_bundle",
+    "generate_proxy_descriptor",
+    "generate_proxy_endpoint",
+    "generate_target_endpoint",
+    "generate_policy_oauthv2",
+    "generate_policy_quota",
+    "generate_policy_spike_arrest",
+    "generate_policy_assign_message",
+    "generate_policy_extract_variables",
+    "generate_policy_raise_fault",
+    "generate_policy_javascript",
+    "generate_policy_service_callout",
+    "package_proxy_bundle"
+  ]
+}

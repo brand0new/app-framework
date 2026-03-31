@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.Python
+pip-wheel-metadata/
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+service-account*.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Testing / coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Node / BPMN service
+bpmn_service/node_modules/
+bpmn_service/.env
+bpmn_service/dist/
+
+# Terraform
+deploy/terraform/.terraform/
+deploy/terraform/*.tfstate
+deploy/terraform/*.tfstate.backup
+deploy/terraform/*.tfvars
+deploy/terraform/.terraform.lock.hcl
+
+# Logs
+*.log
+logs/
+
+# Artifacts / deliverables (generated at runtime)
+deliverables/
+tmp/

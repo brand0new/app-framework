@@ -1,0 +1,18 @@
+{
+  "name": "calendar-skill",
+  "version": "1.0.0",
+  "description": "MCP skill for Google Calendar / Outlook calendar operations",
+  "server": {
+    "transport": "http",
+    "url": "${MCP_CALENDAR_URL}",
+    "healthPath": "/health"
+  },
+  "exposed_tools": [
+    "check_availability",
+    "create_event",
+    "update_event",
+    "delete_event",
+    "list_events",
+    "send_invite"
+  ]
+}

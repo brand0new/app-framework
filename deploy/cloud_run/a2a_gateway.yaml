@@ -1,0 +1,58 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: appygentic-a2a-gateway
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/execution-environment: gen2
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "10"
+        run.googleapis.com/cpu: "2"
+        run.googleapis.com/memory: "2Gi"
+    spec:
+      serviceAccountName: appygentic-a2a-sa@PROJECT_ID.iam.gserviceaccount.com
+      containers:
+        - image: gcr.io/PROJECT_ID/appygentic-a2a-gateway:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: GOOGLE_CLOUD_PROJECT
+              valueFrom:
+                secretKeyRef:
+                  name: appygentic-config
+                  key: GOOGLE_CLOUD_PROJECT
+            - name: PRIMARY_MODEL
+              value: gemini-2.5-flash
+            - name: SPECIALIST_MODEL
+              value: gemini-2.5-pro
+            - name: BPMN_SERVICE_URL
+              value: https://appygentic-bpmn-PROJECT_HASH-uc.a.run.app
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: appygentic-secrets
+                  key: STRIPE_SECRET_KEY
+            - name: NEO4J_URI
+              valueFrom:
+                secretKeyRef:
+                  name: appygentic-secrets
+                  key: NEO4J_URI
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: appygentic-secrets
+                  key: NEO4J_PASSWORD
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            limits:
+              cpu: "2"
+              memory: "2Gi"

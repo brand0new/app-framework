@@ -1,0 +1,21 @@
+{
+  "name": "apim-skill",
+  "version": "1.0.0",
+  "description": "MCP skill for Azure API Management operations",
+  "server": {
+    "transport": "http",
+    "url": "${MCP_APIM_URL}",
+    "healthPath": "/health"
+  },
+  "exposed_tools": [
+    "validate_apim_policy",
+    "generate_apim_policy_jwt",
+    "generate_apim_policy_rate_limit",
+    "generate_apim_policy_set_backend",
+    "generate_apim_policy_cors",
+    "generate_arm_template_api",
+    "generate_arm_template_function_app",
+    "validate_arm_template",
+    "package_azure_artifacts"
+  ]
+}
